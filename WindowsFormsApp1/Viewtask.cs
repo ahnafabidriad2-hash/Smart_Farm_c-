@@ -34,7 +34,7 @@ namespace WindowsFormsApp1
         {
             try
             {
-                string connectionString = "data source=RIAD\\SQLEXPRESS; database=SmartFarm; integrated security=SSPI";
+                string connectionString = "data source=.\\SQLEXPRESS; database=SmartFarm; integrated security=SSPI";
                 SqlConnection conn = new SqlConnection(connectionString);
                 conn.Open();
                 string query = "Select * from TaskInfo ";
@@ -59,7 +59,7 @@ namespace WindowsFormsApp1
 
         private void button3_Click(object sender, EventArgs e)
         {
-            string connectionString = "data source=RIAD\\SQLEXPRESS; database=SmartFarm; integrated security=SSPI";
+            string connectionString = "data source=.\\SQLEXPRESS; database=SmartFarm; integrated security=SSPI";
             int workerId = int.Parse(textBox1.Text.Trim());
 
             if (string.IsNullOrWhiteSpace(textBox1.Text))

@@ -14,7 +14,7 @@ namespace WindowsFormsApp1
     public partial class Profile : Form
     {
 
-        string connectionString = "data source=RIAD\\SQLEXPRESS; database=SmartFarm; integrated security=SSPI";
+        string connectionString = "data source=.\\SQLEXPRESS; database=SmartFarm; integrated security=SSPI";
         private int adminId = 1;
         public Profile()
         {

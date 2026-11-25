@@ -13,7 +13,7 @@ namespace WindowsFormsApp1
 {
     public partial class WorkerProfile : Form
     {
-        string connectionstring = "data source=RIAD\\SQLEXPRESS; database=SmartFarm; integrated security=SSPI";
+        string connectionstring = "data source=.\\SQLEXPRESS; database=SmartFarm; integrated security=SSPI";
         private int _userId = 0;
         public object username {  get; set; }
 
@@ -80,7 +80,7 @@ namespace WindowsFormsApp1
             string phone = textBox3.Text.Trim();
             string address = richTextBox1.Text.Trim();
 
-            string connectionString = "data source=RIAD\\SQLEXPRESS; database=SmartFarm; integrated security=SSPI";
+            string connectionString = "data source=.\\SQLEXPRESS; database=SmartFarm; integrated security=SSPI";
 
 
             if (string.IsNullOrWhiteSpace(userName) || string.IsNullOrWhiteSpace(password) || string.IsNullOrWhiteSpace(phone) || string.IsNullOrWhiteSpace(address))

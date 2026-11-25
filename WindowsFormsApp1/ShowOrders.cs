@@ -13,7 +13,7 @@ namespace WindowsFormsApp1
 {
     public partial class ShowOrders : Form
     {
-        string connectionString = "data source=RIAD\\SQLEXPRESS; database=SmartFarm; integrated security=SSPI";
+        string connectionString = "data source=.\\SQLEXPRESS; database=SmartFarm; integrated security=SSPI";
         private object buyerId;
 
         public ShowOrders()

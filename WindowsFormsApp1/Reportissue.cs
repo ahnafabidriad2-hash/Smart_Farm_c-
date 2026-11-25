@@ -29,7 +29,7 @@ namespace WindowsFormsApp1
         {
             try
             {
-                string connectionString = "data source=RIAD\\SQLEXPRESS; database=SmartFarm; integrated security=SSPI";
+                string connectionString = "data source=.\\SQLEXPRESS; database=SmartFarm; integrated security=SSPI";
                 SqlConnection conn = new SqlConnection(connectionString);
                 conn.Open();
                 string query = "Select * from IssueInfo ";

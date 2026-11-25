@@ -21,7 +21,7 @@ namespace WindowsFormsApp1
 
         private void button1_Click(object sender, EventArgs e)
         {
-            string connectionString = "data source=RIAD\\SQLEXPRESS; database=SmartFarm; integrated security=SSPI";
+            string connectionString = "data source=.\\SQLEXPRESS; database=SmartFarm; integrated security=SSPI";
             string productName = textBox1.Text.Trim();
 
             if (string.IsNullOrWhiteSpace(productName))
@@ -59,7 +59,7 @@ namespace WindowsFormsApp1
         {
             try
             {
-                string connectionString = "data source=RIAD\\SQLEXPRESS; database=SmartFarm; integrated security=SSPI";
+                string connectionString = "data source=.\\SQLEXPRESS; database=SmartFarm; integrated security=SSPI";
                 SqlConnection conn = new SqlConnection(connectionString);
                 conn.Open();
                 string query = "Select * from  ProductInfo";

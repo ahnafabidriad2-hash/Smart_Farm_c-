@@ -13,7 +13,7 @@ namespace WindowsFormsApp1
 {
     public partial class FinanaceDashboard : Form
     {
-        string connectionString = "data source=RIAD\\SQLEXPRESS; database=SmartFarm; integrated security=SSPI";
+        string connectionString = "data source=.\\SQLEXPRESS; database=SmartFarm; integrated security=SSPI";
 
         SqlDataAdapter expenseAdapter;
         DataTable expenseTable;

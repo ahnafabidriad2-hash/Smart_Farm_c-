@@ -37,7 +37,7 @@ namespace WindowsFormsApp1
                 return;
             }
 
-            string connectionString = "data source=RIAD\\SQLEXPRESS; database=SmartFarm; integrated security=SSPI";
+            string connectionString = "data source=.\\SQLEXPRESS; database=SmartFarm; integrated security=SSPI";
             string query = "INSERT INTO TaskInfo ([Task-ID], Status, Description, [Worker-ID]) VALUES (@TaskID, @Status, @Description, @WorkerID)";
 
             using (SqlConnection connection = new SqlConnection(connectionString))

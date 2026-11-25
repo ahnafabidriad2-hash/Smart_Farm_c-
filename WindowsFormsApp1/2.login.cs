@@ -39,7 +39,7 @@ namespace WindowsFormsApp1
                 return;
             }
 
-            string connectionString = "data source=RIAD\\SQLEXPRESS; database=SmartFarm; integrated security=SSPI";
+            string connectionString = "data source=.\\SQLEXPRESS; database=SmartFarm; integrated security=SSPI";
 
             string query = "SELECT Role FROM Login WHERE Id = @id AND Password = @password";
 

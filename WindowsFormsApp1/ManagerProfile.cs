@@ -30,7 +30,7 @@ namespace WindowsFormsApp1
         {
             string query = "SELECT Username, Password, Phone, Address FROM ManagerInfo WHERE [Manager Id] = @ManagerID";
 
-            using (SqlConnection connection = new SqlConnection("data source=RIAD\\SQLEXPRESS; database=SmartFarm; integrated security=SSPI"))
+            using (SqlConnection connection = new SqlConnection("data source=.\\SQLEXPRESS; database=SmartFarm; integrated security=SSPI"))
             {
                 using (SqlCommand command = new SqlCommand(query, connection))
                 {
@@ -77,7 +77,7 @@ namespace WindowsFormsApp1
             string query = "UPDATE ManagerInfo SET Username = @Username, Password = @Password, Phone = @Phone, Address = @Address " +
                            "WHERE [Manager Id] = @ManagerID";
 
-            using (SqlConnection connection = new SqlConnection(@"data source=RIAD\SQLEXPRESS; database=SmartFarm; integrated security=SSPI"))
+            using (SqlConnection connection = new SqlConnection(@"data source=.\SQLEXPRESS; database=SmartFarm; integrated security=SSPI"))
             {
                 using (SqlCommand command = new SqlCommand(query, connection))
                 {

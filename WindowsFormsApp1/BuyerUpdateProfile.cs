@@ -26,7 +26,7 @@ namespace WindowsFormsApp1
 
         private void button3_Click(object sender, EventArgs e)
         {
-            string connectionString = "data source=RIAD\\SQLEXPRESS; database=SmartFarm; integrated security=SSPI";
+            string connectionString = "data source=.\\SQLEXPRESS; database=SmartFarm; integrated security=SSPI";
             string username = textBox2.Text;
 
             string query = "SELECT * FROM BuyerInfo WHERE Username = @Username";
@@ -66,7 +66,7 @@ namespace WindowsFormsApp1
             string phone = textBox4.Text.Trim();
             string address = richTextBox1.Text.Trim();
 
-            string connectionString = "data source=RIAD\\SQLEXPRESS; database=SmartFarm; integrated security=SSPI";
+            string connectionString = "data source=.\\SQLEXPRESS; database=SmartFarm; integrated security=SSPI";
 
 
             if (string.IsNullOrWhiteSpace(userName) || string.IsNullOrWhiteSpace(password) || string.IsNullOrWhiteSpace(phone) || string.IsNullOrWhiteSpace(address))
@@ -122,7 +122,7 @@ namespace WindowsFormsApp1
         {
             string userName = textBox1.Text.Trim();
 
-            string connectionString = "data source=RIAD\\SQLEXPRESS; database=SmartFarm; integrated security=SSPI";
+            string connectionString = "data source=.\\SQLEXPRESS; database=SmartFarm; integrated security=SSPI";
 
             DialogResult result = MessageBox.Show("Are you sure you want to delete this profile?", "Confirm Deletion", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
 

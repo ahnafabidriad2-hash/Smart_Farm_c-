@@ -15,7 +15,7 @@ namespace WindowsFormsApp1
     {
         private SqlDataAdapter Adapter;
         private DataTable DT;
-        string connectionString = "data source=RIAD\\SQLEXPRESS; database=SmartFarm; integrated security=SSPI";
+        string connectionString = "data source=.\\SQLEXPRESS; database=SmartFarm; integrated security=SSPI";
         public UpdateIssue()
         {
             InitializeComponent();
