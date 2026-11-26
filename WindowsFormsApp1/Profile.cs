@@ -11,11 +11,11 @@ using System.Windows.Forms;
 
 namespace WindowsFormsApp1
 {
-    public partial class Profile : Form
+    public partial class Profile : BaseForm
     {
 
-        string connectionString = "data source=.\\SQLEXPRESS; database=SmartFarm; integrated security=SSPI";
-        private int adminId = 1;
+        string connectionString = Db.ConnectionString;
+        private int adminId = Session.UserId > 0 ? Session.UserId : 1; // age shob somoy 1 chilo
         public Profile()
         {
             InitializeComponent();
@@ -52,8 +52,10 @@ namespace WindowsFormsApp1
 
                     if (rowsAffected > 0)
                     {
-                        MessageBox.Show("Record updated successfully!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                        Close(); 
+                        // AdminInfo table o eki rakhi
+                        Db.Execute("UPDATE AdminInfo SET Username = @u, Password = @p, Address = @a WHERE AdminId = @id",
+                            Db.P("@u", name), Db.P("@p", password), Db.P("@a", address), Db.P("@id", adminId));
+                        MessageBox.Show("Record updated successfully!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information); 
                     }
                     else
                     {

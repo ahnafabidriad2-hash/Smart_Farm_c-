@@ -11,11 +11,11 @@ using System.Windows.Forms;
 
 namespace WindowsFormsApp1
 {
-    public partial class WorkerDashboard : Form
+    public partial class WorkerDashboard : BaseForm
     {
         private SqlDataAdapter adapter;
         private DataTable dt;
-        string connectionString = "data source=.\\SQLEXPRESS; database=SmartFarm; integrated security=SSPI";
+        string connectionString = Db.ConnectionString;
 
         public WorkerDashboard()
         {
@@ -44,7 +44,10 @@ namespace WindowsFormsApp1
         private void button1_Click(object sender, EventArgs e)
         {
             WorkerRegistration WR = new WorkerRegistration();
-            WR.Show();
+            // age registration khulle pichone dashboard thakto ar register er por arekta notun dashboard khulto (duita hoye jeto).
+            // ekhon registration sesh hole eki dashboard er list refresh hoy
+            WR.ShowDialog(this);
+            FillDataGridView("SELECT * FROM WorkerInfo");
         }
 
         private void Exit_Click(object sender, EventArgs e)
@@ -125,7 +128,7 @@ namespace WindowsFormsApp1
 
             using (SqlConnection con = new SqlConnection(connectionString))
             {
-                string deleteQuery = "DELETE FROM WorkerInfo WHERE [Worker Id] = @WorkerId";
+                string deleteQuery = "DELETE FROM WorkerInfo WHERE [Worker Id] = @WorkerId; DELETE FROM Login WHERE ID = @WorkerId AND Role = 'worker'"; // age login theke jeto na, tai remove kora manush o login korte parto
                 using (SqlCommand cmd = new SqlCommand(deleteQuery, con))
                 {
                     cmd.Parameters.AddWithValue("@WorkerId", workerId);

@@ -10,7 +10,7 @@ using System.Windows.Forms;
 
 namespace WindowsFormsApp1
 {
-    public partial class LoadingScreen : Form
+    public partial class LoadingScreen : BaseForm
     {
         public LoadingScreen()
         {

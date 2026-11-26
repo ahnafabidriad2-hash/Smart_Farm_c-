@@ -11,7 +11,7 @@ using System.Windows.Forms;
 
 namespace WindowsFormsApp1
 {
-    public partial class WorkerRegistration : Form
+    public partial class WorkerRegistration : BaseForm
     {
         public WorkerRegistration()
         {
@@ -21,7 +21,7 @@ namespace WindowsFormsApp1
         private void button1_Click(object sender, EventArgs e)
         {
 
-            string connectionString = "data source=.\\SQLEXPRESS; database=SmartFarm; integrated security=SSPI";
+            string connectionString = Db.ConnectionString;
 
             string id = textBox1.Text.Trim();
             string role = textBox2.Text.Trim().ToLower();  
@@ -92,15 +92,27 @@ namespace WindowsFormsApp1
                 try
                 {
                     connection.Open();
-                    int loginRows = loginCommand.ExecuteNonQuery();
-                    int roleRows = roleCommand.ExecuteNonQuery();
+                    // duita table e ekshathe: ekta fail korle onnota o undo hoy (age login thakto kintu worker/buyer thakto na)
+                    SqlTransaction tran = connection.BeginTransaction();
+                    loginCommand.Transaction = tran;
+                    roleCommand.Transaction = tran;
+                    int loginRows, roleRows;
+                    try
+                    {
+                        loginRows = loginCommand.ExecuteNonQuery();
+                        roleRows = roleCommand.ExecuteNonQuery();
+                        tran.Commit();
+                    }
+                    catch
+                    {
+                        tran.Rollback();
+                        throw;
+                    }
 
                     if (loginRows > 0 && roleRows > 0)
                     {
                         MessageBox.Show("Profile created successfully!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                        this.Hide();
-                        WorkerDashboard WD1 = new WorkerDashboard();
-                        WD1.Show();
+                        this.Close(); // dashboard pichone khola ase, sekhane list refresh hoy
                     }
                     else
                     {
@@ -109,16 +121,14 @@ namespace WindowsFormsApp1
                 }
                 catch (SqlException ex)
                 {
-                    MessageBox.Show("Database error: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    Db.ShowError(ex);
                 }
             }
         }
 
         private void Exit_Click(object sender, EventArgs e)
         {
-            WorkerDashboard WD2= new WorkerDashboard();
-            WD2.Show();
-            this.Hide();
+            this.Close();
         }
     }
 }

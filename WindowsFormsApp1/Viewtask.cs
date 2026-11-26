@@ -1,17 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
 using System.Data;
-using System.Data.SqlClient;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace WindowsFormsApp1
 {
-    public partial class Viewtask : Form
+    public partial class Viewtask : BaseForm
     {
         public Viewtask()
         {
@@ -20,77 +13,47 @@ namespace WindowsFormsApp1
 
         private void button1_Click(object sender, EventArgs e)
         {
-            WorkerPage vt = new WorkerPage();
-            vt.Show();
-            this.Close();   
+            new WorkerPage().Show();
+            this.Close();
         }
 
+        // khulle-i nijer task gula dekhay
         private void Viewtask_Load(object sender, EventArgs e)
         {
-
+            button2_Click(sender, e);
         }
 
+        // worker hole shudhu nijer task, onno keu hole sob
         private void button2_Click(object sender, EventArgs e)
         {
-            try
+            if (Session.Role == "worker")
             {
-                string connectionString = "data source=.\\SQLEXPRESS; database=SmartFarm; integrated security=SSPI";
-                SqlConnection conn = new SqlConnection(connectionString);
-                conn.Open();
-                string query = "Select * from TaskInfo ";
-
-                SqlCommand cmd = new SqlCommand(query, conn);
-                SqlDataAdapter adp = new SqlDataAdapter(cmd);
-                DataSet ds = new DataSet();
-                adp.Fill(ds);
-                DataTable dt = ds.Tables[0];
-                dataGridView1.AutoGenerateColumns = true;
-                dataGridView1.DataSource = dt;
-                cmd.ExecuteNonQuery();
-
+                textBox1.Text = Session.UserId.ToString();
+                dataGridView1.DataSource = Db.Query("SELECT * FROM TaskInfo WHERE [Worker-Id] = @id ORDER BY [Task-Id]", Db.P("@id", Session.UserId));
             }
-            catch { }
+            else
+            {
+                dataGridView1.DataSource = Db.Query("SELECT * FROM TaskInfo ORDER BY [Task-Id]");
+            }
+        }
+
+        // age query te "@WrokerId" bananer vul chilo, tai search korlei crash korto.
+        // ar faka/okkhor dile int.Parse e crash korto
+        private void button3_Click(object sender, EventArgs e)
+        {
+            if (!int.TryParse(textBox1.Text.Trim(), out int workerId))
+            {
+                MessageBox.Show("Please enter a worker ID (number).", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+            DataTable dataTable = Db.Query("SELECT * FROM TaskInfo WHERE [Worker-Id] = @WorkerId ORDER BY [Task-Id]", Db.P("@WorkerId", workerId));
+            dataGridView1.DataSource = dataTable;
+            if (dataTable.Rows.Count == 0)
+                MessageBox.Show("No tasks found for worker " + workerId + ".", "Search", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
         private void dataGridView1_CellContentClick(object sender, DataGridViewCellEventArgs e)
         {
-
-        }
-
-        private void button3_Click(object sender, EventArgs e)
-        {
-            string connectionString = "data source=.\\SQLEXPRESS; database=SmartFarm; integrated security=SSPI";
-            int workerId = int.Parse(textBox1.Text.Trim());
-
-            if (string.IsNullOrWhiteSpace(textBox1.Text))
-            {
-                MessageBox.Show("Please enter a search term.", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
-
-            string query = @"SELECT * FROM TaskInfo
-                     WHERE [Worker-Id] LIKE @WrokerId";
-
-
-            using (SqlConnection connection = new SqlConnection(connectionString))
-            {
-                using (SqlCommand command = new SqlCommand(query, connection))
-                {
-                    command.Parameters.AddWithValue("@WorkerId", "%" + workerId + "%");
-
-
-                    connection.Open();
-                    SqlDataReader reader = command.ExecuteReader();
-                    DataTable dataTable = new DataTable();
-                    dataTable.Load(reader);
-                    dataGridView1.DataSource = dataTable;
-
-                    if (dataTable.Rows.Count == 0)
-                    {
-                        MessageBox.Show("No matching rows found.", "Search Result", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    }
-                }
-            }
         }
     }
 }

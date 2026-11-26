@@ -1,168 +1,106 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
 using System.Data;
-using System.Data.SqlClient;
-using System.Drawing;
-using System.Linq;
-using System.Net.NetworkInformation;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace WindowsFormsApp1
 {
-    public partial class Buyer_Profile : Form
+    // age buyer ke nijer naam type kore "Show All" chapte hoto, ID faka rekhe Update chaple crash korto,
+    // ar Delete ID ke naam hishebe khujto tai kichu delete hoto na. ekhon login kora buyer er info nijei ase
+    public partial class Buyer_Profile : BaseForm
     {
         public Buyer_Profile()
         {
             InitializeComponent();
+            textBox1.ReadOnly = true; // nijer ID bodlano jabe na
+            dataGridView1.ReadOnly = true;
         }
 
         private void label3_Click(object sender, EventArgs e)
         {
-
         }
 
+        private void LoadProfile()
+        {
+            DataTable dt = Db.Query("SELECT * FROM BuyerInfo WHERE [Buyer-ID] = @id", Db.P("@id", Session.UserId));
+            if (dt.Rows.Count == 0)
+            {
+                MessageBox.Show("Your buyer profile was not found.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+            DataRow r = dt.Rows[0];
+            textBox1.Text = r["Buyer-ID"].ToString();
+            textBox2.Text = r["Username"].ToString().Trim();
+            textBox3.Text = r["Password"].ToString().Trim();
+            textBox4.Text = r["Phone"].ToString().Trim();
+            richTextBox1.Text = r["Address"].ToString().Trim();
+            // nicher table e nijer order gula
+            dataGridView1.DataSource = Db.Query("SELECT [Order-Id], [Product Name], Quantity, Price, [Total price], Confirmation FROM OrderInfo WHERE [Buyer-Id] = @id",
+                Db.P("@id", Session.UserId));
+        }
+
+        // "Show All" = abar load
         private void button3_Click(object sender, EventArgs e)
         {
-            string connectionString = "data source=.\\SQLEXPRESS; database=SmartFarm; integrated security=SSPI";
-            string username = textBox2.Text;
-
-            string query = "SELECT * FROM BuyerInfo WHERE Username = @Username";
-
-            using (SqlConnection connection = new SqlConnection(connectionString))
-            {
-                using (SqlCommand command = new SqlCommand(query, connection))
-                {
-                    command.Parameters.AddWithValue("@Username", username);
-                    connection.Open();
-
-                    SqlDataReader reader = command.ExecuteReader();
-                    if (reader.Read())
-                    {
-                        textBox1.Text = reader["Buyer-ID"].ToString();
-                        textBox2.Text = reader["Username"].ToString();
-                        textBox3.Text = reader["Password"].ToString();
-                        textBox4.Text = reader["Phone"].ToString();
-                        richTextBox1.Text = reader["Address"].ToString();
-
-                    }
-                    else
-                    {
-                        MessageBox.Show("No details found for the given Username.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-
-
-                    }
-                }
-            }
+            LoadProfile();
         }
 
         private void button1_Click(object sender, EventArgs e)
         {
-            int buyerId = int.Parse(textBox1.Text.Trim());
             string userName = textBox2.Text.Trim();
             string password = textBox3.Text.Trim();
             string phone = textBox4.Text.Trim();
             string address = richTextBox1.Text.Trim();
 
-            string connectionString = "data source=.\\SQLEXPRESS; database=SmartFarm; integrated security=SSPI";
-
-
             if (string.IsNullOrWhiteSpace(userName) || string.IsNullOrWhiteSpace(password) || string.IsNullOrWhiteSpace(phone) || string.IsNullOrWhiteSpace(address))
             {
-
                 MessageBox.Show("All fields must be filled out.", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
-
-            if (!long.TryParse(phone, out long Phone))
+            if (!int.TryParse(phone, out int Phone))
             {
                 MessageBox.Show("Phone must be numeric.", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
-
-            string query = @"
-   UPDATE BuyerInfo 
-    SET UserName = @UserName,
-        Password = @Password,
-        Phone = @Phone,
-        Address = @Address
-    WHERE [Buyer-ID] = @BuyerId";
-
-            using (SqlConnection connection = new SqlConnection(connectionString))
+            int rows = Db.Execute("UPDATE BuyerInfo SET UserName = @u, Password = @p, Phone = @ph, Address = @a WHERE [Buyer-ID] = @id",
+                Db.P("@u", userName), Db.P("@p", password), Db.P("@ph", Phone), Db.P("@a", address), Db.P("@id", Session.UserId));
+            if (rows > 0)
             {
-                using (SqlCommand command = new SqlCommand(query, connection))
-                {
-                    command.Parameters.AddWithValue("@BuyerID", buyerId);
-                    command.Parameters.AddWithValue("@UserName", userName);
-                    command.Parameters.AddWithValue("@Password", password);
-                    command.Parameters.AddWithValue("@Phone", phone);
-                    command.Parameters.AddWithValue("@Address", address);
-
-                    connection.Open();
-                    int rowsAffected = command.ExecuteNonQuery();
-
-                    if (rowsAffected > 0)
-                    {
-                        MessageBox.Show("Record updated successfully!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                        
-                    }
-                    else
-                    {
-                        MessageBox.Show("No record was updated. Please try again.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    }
-                }
+                // login er password o eki shathe bodlay
+                Db.Execute("UPDATE Login SET Username = @u, Password = @p, Phone = @ph, Address = @a WHERE ID = @id",
+                    Db.P("@u", userName), Db.P("@p", password), Db.P("@ph", Phone), Db.P("@a", address), Db.P("@id", Session.UserId));
+                MessageBox.Show("Record updated successfully!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
-
+            else if (rows == 0)
+            {
+                MessageBox.Show("No record was updated. Please try again.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
 
+        // profile delete korle login o muche jay, tarpor login page e fire jay
         private void button2_Click(object sender, EventArgs e)
         {
-            string userName = textBox1.Text.Trim();
-
-            string connectionString = "data source=.\\SQLEXPRESS; database=SmartFarm; integrated security=SSPI";
-
-            DialogResult result = MessageBox.Show("Are you sure you want to delete this profile?", "Confirm Deletion", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
-
-            if (result == DialogResult.Yes)
-            {
-                string query = "DELETE FROM BuyerInfo WHERE UserName = @UserName";
-
-                using (SqlConnection connection = new SqlConnection(connectionString))
-                {
-                    using (SqlCommand command = new SqlCommand(query, connection))
-                    {
-                        command.Parameters.AddWithValue("@UserName", userName);
-
-                        connection.Open();
-                        int rowsAffected = command.ExecuteNonQuery();
-
-                        if (rowsAffected > 0)
-                        {
-                            MessageBox.Show("Profile deleted successfully!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                           
-                        }
-                        else
-                        {
-                            MessageBox.Show("No profile was found to delete.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                        }
-                    }
-                }
-            }
+            if (MessageBox.Show("Are you sure you want to delete your profile? You will not be able to log in again.", "Confirm Deletion",
+                MessageBoxButtons.YesNo, MessageBoxIcon.Warning) != DialogResult.Yes)
+                return;
+            int rows = Db.Execute("DELETE FROM BuyerInfo WHERE [Buyer-ID] = @id", Db.P("@id", Session.UserId));
+            if (rows < 0) return;
+            Db.Execute("DELETE FROM Login WHERE ID = @id AND Role = 'buyer'", Db.P("@id", Session.UserId));
+            MessageBox.Show("Profile deleted.", "Deleted", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            Session.Logout();
+            new Login().Show();
+            this.Close();
         }
 
         private void button4_Click(object sender, EventArgs e)
         {
-            BuyerPage bp = new BuyerPage();
-            bp.Show();
-            this.Hide();
+            new BuyerPage().Show();
+            this.Close();
         }
 
         private void Buyer_Profile_Load(object sender, EventArgs e)
         {
-
+            LoadProfile();
         }
     }
 }

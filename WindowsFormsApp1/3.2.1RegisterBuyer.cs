@@ -11,7 +11,7 @@ using System.Windows.Forms;
 
 namespace WindowsFormsApp1
 {
-    public partial class BuyerRegister : Form
+    public partial class BuyerRegister : BaseForm
     {
         public BuyerRegister()
         {
@@ -20,7 +20,7 @@ namespace WindowsFormsApp1
 
         private void button1_Click(object sender, EventArgs e)
         {
-            string connectionString = "data source=.\\SQLEXPRESS; database=SmartFarm; integrated security=SSPI";
+            string connectionString = Db.ConnectionString;
 
             string id = textBox1.Text.Trim();
             string username = textBox3.Text.Trim();
@@ -80,15 +80,42 @@ namespace WindowsFormsApp1
                 {
                     connection.Open();
 
-                    int loginRows = loginCommand.ExecuteNonQuery();
-                    int buyerRows = buyerCommand.ExecuteNonQuery();
+                    // duita table e ekshathe: ekta fail korle onnota o undo hoy (age login thakto kintu worker/buyer thakto na)
+
+                    SqlTransaction tran = connection.BeginTransaction();
+
+                    loginCommand.Transaction = tran;
+
+                    buyerCommand.Transaction = tran;
+
+                    int loginRows, buyerRows;
+
+                    try
+
+                    {
+
+                        loginRows = loginCommand.ExecuteNonQuery();
+
+                        buyerRows = buyerCommand.ExecuteNonQuery();
+
+                        tran.Commit();
+
+                    }
+
+                    catch
+
+                    {
+
+                        tran.Rollback();
+
+                        throw;
+
+                    }
 
                     if (loginRows > 0 && buyerRows > 0)
                     {
                         MessageBox.Show("Buyer registered successfully!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                        this.Hide();
-                        BuyerDashboard bd = new BuyerDashboard(); 
-                        bd.Show();
+                        this.Close(); // dashboard pichone khola ase, sekhane list refresh hoy
                     }
                     else
                     {
@@ -97,7 +124,7 @@ namespace WindowsFormsApp1
                 }
                 catch (SqlException ex)
                 {
-                    MessageBox.Show("Database error: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    Db.ShowError(ex);
                 }
             }
         }
@@ -109,9 +136,7 @@ namespace WindowsFormsApp1
 
         private void Exit_Click(object sender, EventArgs e)
         {
-            BuyerDashboard BD2 = new BuyerDashboard();
-            BD2.Show();
-            this.Hide();
+            this.Close();
         }
 
         private void textBox3_TextChanged(object sender, EventArgs e)

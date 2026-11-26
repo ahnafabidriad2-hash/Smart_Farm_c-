@@ -11,9 +11,9 @@ using System.Windows.Forms;
 
 namespace WindowsFormsApp1
 {
-    public partial class FinanaceDashboard : Form
+    public partial class FinanaceDashboard : BaseForm
     {
-        string connectionString = "data source=.\\SQLEXPRESS; database=SmartFarm; integrated security=SSPI";
+        string connectionString = Db.ConnectionString;
 
         SqlDataAdapter expenseAdapter;
         DataTable expenseTable;

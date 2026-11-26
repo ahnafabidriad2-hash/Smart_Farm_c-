@@ -33,6 +33,7 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="System.Configuration" />
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -46,6 +47,10 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="BaseForm.cs" />
+    <Compile Include="Db.cs" />
+    <Compile Include="InputDialog.cs" />
+    <Compile Include="Session.cs" />
     <Compile Include="1.LoadingScreen.cs">
       <SubType>Form</SubType>
     </Compile>

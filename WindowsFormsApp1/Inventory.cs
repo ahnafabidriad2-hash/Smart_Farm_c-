@@ -11,11 +11,11 @@ using System.Windows.Forms;
 
 namespace WindowsFormsApp1
 {
-    public partial class Inventory : Form
+    public partial class Inventory : BaseForm
     {
         private SqlDataAdapter ADAPTER;
         private DataTable dataT;
-        string connectionString = "data source=.\\SQLEXPRESS; database=SmartFarm; integrated security=SSPI";
+        string connectionString = Db.ConnectionString;
         public Inventory()
         {
             InitializeComponent();
@@ -57,7 +57,8 @@ namespace WindowsFormsApp1
 
         private void button2_Click(object sender, EventArgs e)
         {
-              this.Close();
+            new ManagerPage().Show(); // age shudhu bondho hoto, kono window e thakto na
+            this.Close();
 
         }
 

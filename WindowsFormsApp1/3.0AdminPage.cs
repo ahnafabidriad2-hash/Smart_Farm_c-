@@ -11,9 +11,9 @@ using System.Windows.Forms;
 
 namespace WindowsFormsApp1
 {
-    public partial class AdminPage : Form
+    public partial class AdminPage : BaseForm
     {
-        string connectionString = "data source=.\\SQLEXPRESS; database=SmartFarm; integrated security=SSPI";
+        string connectionString = Db.ConnectionString;
         public AdminPage()
         {
             InitializeComponent();
@@ -70,6 +70,9 @@ namespace WindowsFormsApp1
 
         private void Exit_Click(object sender, EventArgs e)
         {
+            // age shudhu window bondho hoto ar app pichone cholte thakto, ekhon login e fire jay
+            Session.Logout();
+            new Login().Show();
             this.Close();
         }
 
@@ -99,21 +102,40 @@ namespace WindowsFormsApp1
             this.Hide();
         }
 
+        // admin order er Confirmation ghore "Accept" ba "Decline" likhe ei button chape.
+        // age eki order duibar accept korle income duibar jog hoto, cancel kora order o accept hoto,
+        // ar stock kombe na. ekhon sob ekshathe (transaction) hoy, kono ek ta vul hole kichui bodlay na
         private void ConfirmOrder_Click(object sender, EventArgs e)
         {
-            if (dataGridView1.CurrentRow == null)
+            if (dataGridView1.CurrentRow == null || dataGridView1.CurrentRow.IsNewRow)
             {
-                MessageBox.Show("Please select an order first.");
+                MessageBox.Show("Please select an order first.", "Confirm Order", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+            DataGridViewRow row = dataGridView1.CurrentRow;
+            int orderId = Convert.ToInt32(row.Cells["Order-Id"].Value);
+            string decision = row.Cells["Confirmation"].Value?.ToString().Trim() ?? "";
+
+            bool accept = decision.Equals("Accept", StringComparison.OrdinalIgnoreCase);
+            bool decline = decision.Equals("Decline", StringComparison.OrdinalIgnoreCase);
+            if (!accept && !decline)
+            {
+                MessageBox.Show("Type 'Accept' or 'Decline' in the Confirmation column of the order, then press Confirm Order.",
+                    "Confirm Order", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
 
-            
-            int orderId = Convert.ToInt32(dataGridView1.CurrentRow.Cells["Order-Id"].Value);
-            string confirmationValue = dataGridView1.CurrentRow.Cells["Confirmation"].Value?.ToString().Trim();
-
-            if (string.IsNullOrEmpty(confirmationValue))
+            string current = (Db.Scalar("SELECT RTRIM(Confirmation) FROM OrderInfo WHERE [Order-Id] = @o", Db.P("@o", orderId)) ?? "").ToString();
+            if (current.Equals("Accept", StringComparison.OrdinalIgnoreCase) || current.Equals("Decline", StringComparison.OrdinalIgnoreCase))
             {
-                MessageBox.Show("Please enter 'Accept' or 'Decline' in the Confirmation column before confirming.");
+                MessageBox.Show("Order " + orderId + " was already " + current.ToLower() + "ed.", "Confirm Order", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                LoadOrderInfo();
+                return;
+            }
+            if (current.Equals("Cancelled", StringComparison.OrdinalIgnoreCase))
+            {
+                MessageBox.Show("The buyer cancelled order " + orderId + ".", "Confirm Order", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                LoadOrderInfo();
                 return;
             }
 
@@ -122,61 +144,51 @@ namespace WindowsFormsApp1
                 using (SqlConnection conn = new SqlConnection(connectionString))
                 {
                     conn.Open();
-
-                    
-                    string updateQuery = "UPDATE dbo.[OrderInfo] SET Confirmation = @Confirmation WHERE [Order-Id] = @OrderId";
-                    using (SqlCommand cmd = new SqlCommand(updateQuery, conn))
+                    using (SqlTransaction tran = conn.BeginTransaction())
                     {
-                        cmd.Parameters.AddWithValue("@Confirmation", confirmationValue);
-                        cmd.Parameters.AddWithValue("@OrderId", orderId);
-                        cmd.ExecuteNonQuery();
-                    }
+                        new SqlCommand("UPDATE OrderInfo SET Confirmation = @c WHERE [Order-Id] = @o", conn, tran)
+                        { Parameters = { new SqlParameter("@c", accept ? "Accept" : "Decline"), new SqlParameter("@o", orderId) } }.ExecuteNonQuery();
 
-                   
-                    if (confirmationValue.Equals("Accept", StringComparison.OrdinalIgnoreCase))
-                    {
-                        
-                        int productId = Convert.ToInt32(dataGridView1.CurrentRow.Cells["Product-Id"].Value);
-                        string productName = dataGridView1.CurrentRow.Cells["Product Name"].Value.ToString();
-                        double unitPrice = Convert.ToDouble(dataGridView1.CurrentRow.Cells["Price"].Value);
-                        int quantity = Convert.ToInt32(dataGridView1.CurrentRow.Cells["Quantity"].Value);
-                        double totalSell = unitPrice * quantity;
-                        DateTime dateTimeNow = DateTime.Now;
-
-                        string insertIncomeQuery = @"
-                    INSERT INTO dbo.[Income] ([Product Id], [Product Name], [Unit Price], Quantity, [Total Sell], [Date and time])
-                    VALUES (@ProductId, @ProductName, @UnitPrice, @Quantity, @TotalSell, @DateTimeNow)";
-
-                        using (SqlCommand cmd = new SqlCommand(insertIncomeQuery, conn))
+                        if (accept)
                         {
-                            cmd.Parameters.AddWithValue("@ProductId", productId);
-                            cmd.Parameters.AddWithValue("@ProductName", productName);
-                            cmd.Parameters.AddWithValue("@UnitPrice", unitPrice);
-                            cmd.Parameters.AddWithValue("@Quantity", quantity);
-                            cmd.Parameters.AddWithValue("@TotalSell", totalSell);
-                            cmd.Parameters.AddWithValue("@DateTimeNow", dateTimeNow);
-                            cmd.ExecuteNonQuery();
-                        }
+                            string productId = row.Cells["Product-Id"].Value.ToString().Trim();
+                            string productName = row.Cells["Product Name"].Value.ToString().Trim();
+                            double unitPrice = Convert.ToDouble(row.Cells["Price"].Value);
+                            int quantity = Convert.ToInt32(row.Cells["Quantity"].Value.ToString().Trim());
 
-                        MessageBox.Show(" Order confirmed and added to Income table.");
-                    }
-                    else if (confirmationValue.Equals("Decline", StringComparison.OrdinalIgnoreCase))
-                    {
-                        MessageBox.Show(" Order declined.");
-                    }
-                    else
-                    {
-                        MessageBox.Show("Invalid confirmation value. Please enter 'Accept' or 'Decline'.");
+                            // stock theke kome; stock kom thakle accept hoy na
+                            object stockObj = new SqlCommand("SELECT Quantity FROM ProductInfo WHERE [Product ID] = @p", conn, tran)
+                            { Parameters = { new SqlParameter("@p", productId) } }.ExecuteScalar();
+                            if (stockObj != null && Convert.ToInt32(stockObj) < quantity)
+                            {
+                                tran.Rollback();
+                                MessageBox.Show("Not enough stock: only " + stockObj + " " + productName + " left.", "Confirm Order", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                                return;
+                            }
+                            if (stockObj != null)
+                            {
+                                new SqlCommand("UPDATE ProductInfo SET Quantity = Quantity - @q WHERE [Product ID] = @p", conn, tran)
+                                { Parameters = { new SqlParameter("@q", quantity), new SqlParameter("@p", productId) } }.ExecuteNonQuery();
+                            }
+
+                            new SqlCommand(@"INSERT INTO Income ([Product Id], [Product Name], [Unit Price], Quantity, [Total Sell], [Date and time])
+                                             VALUES (@p, @n, @u, @q, @t, @d)", conn, tran)
+                            {
+                                Parameters = { new SqlParameter("@p", productId), new SqlParameter("@n", productName), new SqlParameter("@u", unitPrice),
+                                               new SqlParameter("@q", quantity), new SqlParameter("@t", unitPrice * quantity), new SqlParameter("@d", DateTime.Now) }
+                            }.ExecuteNonQuery();
+                        }
+                        tran.Commit();
                     }
                 }
-
-              
-                LoadOrderInfo();
+                MessageBox.Show(accept ? "Order " + orderId + " accepted and added to income." : "Order " + orderId + " declined.",
+                    "Confirm Order", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
-            catch (Exception ex)
+            catch (SqlException ex)
             {
-                MessageBox.Show("Error confirming order: " + ex.Message);
+                Db.ShowError(ex);
             }
+            LoadOrderInfo();
         }
     }
 }

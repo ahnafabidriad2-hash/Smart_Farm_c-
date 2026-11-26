@@ -10,7 +10,7 @@ using System.Windows.Forms;
 
 namespace WindowsFormsApp1
 {
-    public partial class WorkerPage : Form
+    public partial class WorkerPage : BaseForm
     {
         public WorkerPage()
         {
@@ -28,7 +28,7 @@ namespace WindowsFormsApp1
 
             if (result == DialogResult.Yes)
             {
-                
+                Session.Logout(); // ke login korse seta mucche fela
                 Login bi = new Login();
                 bi.Show();
                 this.Close();

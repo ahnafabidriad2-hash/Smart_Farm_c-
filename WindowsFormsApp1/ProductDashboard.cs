@@ -11,11 +11,11 @@ using System.Windows.Forms;
 
 namespace WindowsFormsApp1
 {
-    public partial class ProductDashboard : Form
+    public partial class ProductDashboard : BaseForm
     {
         private SqlDataAdapter adapter;
         private DataTable dt;
-        string connectionString = "data source=.\\SQLEXPRESS; database=SmartFarm; integrated security=SSPI";
+        string connectionString = Db.ConnectionString;
 
         public ProductDashboard()
         {

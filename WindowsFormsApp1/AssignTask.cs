@@ -1,26 +1,18 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Data.SqlClient;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace WindowsFormsApp1
 {
-    public partial class AssignTask : Form
+    public partial class AssignTask : BaseForm
     {
         public AssignTask()
         {
             InitializeComponent();
-            string[] status = new string[3];
-            status[0] = "Pending";
-            status[1] = "Working";
-            status[2] = "Completed";
-            tstatuscomboBox1.DataSource = status;
+            tstatuscomboBox1.DataSource = new[] { "Pending", "Working", "Completed" };
+            tstatuscomboBox1.DropDownStyle = ComboBoxStyle.DropDownList;
+            // porer khali task ID ta age thekei bosiye dei
+            object max = Db.Scalar("SELECT ISNULL(MAX([Task-Id]), 0) + 1 FROM TaskInfo");
+            if (max != null) taskidtextBox1.Text = max.ToString();
         }
 
         private void button1_Click(object sender, EventArgs e)
@@ -33,43 +25,38 @@ namespace WindowsFormsApp1
             if (string.IsNullOrWhiteSpace(taskID) || string.IsNullOrWhiteSpace(status) ||
                 string.IsNullOrWhiteSpace(description) || string.IsNullOrWhiteSpace(workerID))
             {
-                MessageBox.Show("Please fill in all fields.", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show("Please fill in all fields.", "Missing Information", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+            // age okkhor dile ba eki ID duibar dile app crash korto
+            if (!int.TryParse(taskID, out int tid) || !int.TryParse(workerID, out int wid))
+            {
+                MessageBox.Show("Task ID and Worker ID must be numbers.", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+            // je worker nai tar kache task deya jabe na
+            object isWorker = Db.Scalar("SELECT COUNT(*) FROM Login WHERE ID = @id AND Role = 'worker'", Db.P("@id", wid));
+            if (isWorker == null) return;
+            if (Convert.ToInt32(isWorker) == 0)
+            {
+                MessageBox.Show("There is no worker with ID " + wid + ".", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
-            string connectionString = "data source=.\\SQLEXPRESS; database=SmartFarm; integrated security=SSPI";
-            string query = "INSERT INTO TaskInfo ([Task-ID], Status, Description, [Worker-ID]) VALUES (@TaskID, @Status, @Description, @WorkerID)";
-
-            using (SqlConnection connection = new SqlConnection(connectionString))
+            int result = Db.Execute("INSERT INTO TaskInfo ([Task-ID], Status, Description, [Worker-ID]) VALUES (@TaskID, @Status, @Description, @WorkerID)",
+                Db.P("@TaskID", tid), Db.P("@Status", status), Db.P("@Description", description), Db.P("@WorkerID", wid));
+            if (result > 0)
             {
-                using (SqlCommand command = new SqlCommand(query, connection))
-                {
-                    command.Parameters.AddWithValue("@TaskID", taskID);
-                    command.Parameters.AddWithValue("@Status", status);
-                    command.Parameters.AddWithValue("@Description", description);
-                    command.Parameters.AddWithValue("@WorkerID", workerID);
-
-                    connection.Open();
-                    int result = command.ExecuteNonQuery();
-
-                    if (result > 0)
-                    {
-                        MessageBox.Show("Task assigned successfully!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    }
-                    else
-                    {
-                        MessageBox.Show("Failed to assign task.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    }
-                }
+                MessageBox.Show("Task assigned successfully!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                taskidtextBox1.Text = (tid + 1).ToString();
+                tdestextBox2.Clear();
             }
-
         }
 
         private void button2_Click(object sender, EventArgs e)
         {
+            new ManagerPage().Show();
             this.Close();
-            ManagerPage p = new ManagerPage();
-            p.Show();
         }
     }
 }

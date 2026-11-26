@@ -1,76 +1,51 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
 using System.Data;
-using System.Data.SqlClient;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace WindowsFormsApp1
 {
-    public partial class WorkerProfile : Form
+    public partial class WorkerProfile : BaseForm
     {
-        string connectionstring = "data source=.\\SQLEXPRESS; database=SmartFarm; integrated security=SSPI";
-        private int _userId = 0;
-        public object username {  get; set; }
+        public object username { get; set; }
 
         public WorkerProfile()
         {
             InitializeComponent();
+            textBox4.ReadOnly = true; // worker ID bodlano jabe na
         }
 
+        // age profile kokhono load hoto na: query te "Worker_Id" nam er column chilo na,
+        // parameter er naam o milto na, ar Show button er vitore kichu chilo na
         private void LoadUserProfile()
         {
-            try
+            DataTable dt = Db.Query("SELECT [Worker Id], Username, Password, Address, Phone FROM WorkerInfo WHERE [Worker Id] = @id",
+                Db.P("@id", Session.UserId));
+            if (dt.Rows.Count == 0)
             {
-                using (SqlConnection conn = new SqlConnection(connectionstring))
-                using (SqlCommand cmd = new SqlCommand(
-                    "SELECT Worker_Id,Username,Password,Address,Phone FROM [WorkerInfo] WHERE Worker_Id = @Worker_Id", conn))
-                {
-                    cmd.Parameters.AddWithValue("@Id", _userId);
-
-                    conn.Open();
-                    using (SqlDataReader reader = cmd.ExecuteReader())
-                    {
-                        if (reader.Read())
-                        {
-                            textBox4.Text = reader["Worker_Id"].ToString();
-                            textBox1.Text = reader["Username"].ToString();
-                            textBox2.Text = reader["Password"].ToString();
-                            textBox3.Text = reader["Phone"].ToString();
-                            richTextBox1.Text = reader["Address"].ToString();
-                        }
-                        else
-                        {
-                            MessageBox.Show("Worker info not found.", "Error", MessageBoxButtons.OK);
-                        }
-                    }
-                }
+                MessageBox.Show("Worker info not found.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
             }
-
-            catch (Exception ex)
-            {
-                MessageBox.Show("Error loading profile: " + ex.Message);
-            }
+            DataRow r = dt.Rows[0];
+            textBox4.Text = r["Worker Id"].ToString();
+            textBox1.Text = r["Username"].ToString().Trim();
+            textBox2.Text = r["Password"].ToString().Trim();
+            textBox3.Text = r["Phone"].ToString().Trim();
+            richTextBox1.Text = r["Address"].ToString().Trim();
         }
+
         private void label3_Click(object sender, EventArgs e)
         {
-
         }
 
         private void button2_Click(object sender, EventArgs e)
         {
-            WorkerPage wp = new WorkerPage();   
-            wp.Show();
+            new WorkerPage().Show();
             this.Close();
         }
 
         private void WorkerProfile_Load(object sender, EventArgs e)
         {
-
+            LoadUserProfile();
         }
 
         private void button1_Click(object sender, EventArgs e)
@@ -80,78 +55,43 @@ namespace WindowsFormsApp1
             string phone = textBox3.Text.Trim();
             string address = richTextBox1.Text.Trim();
 
-            string connectionString = "data source=.\\SQLEXPRESS; database=SmartFarm; integrated security=SSPI";
-
-
             if (string.IsNullOrWhiteSpace(userName) || string.IsNullOrWhiteSpace(password) || string.IsNullOrWhiteSpace(phone) || string.IsNullOrWhiteSpace(address))
             {
-
                 MessageBox.Show("All fields must be filled out.", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
-
             if (!int.TryParse(phone, out int Phone))
             {
                 MessageBox.Show("Phone must be numeric.", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
-            string query = "UPDATE WorkerInfo SET Password = @Password, Phone = @Phone, Address = @Address WHERE UserName = @UserName";
-
-            using (SqlConnection connection = new SqlConnection(connectionString))
+            // age naam diye khuje update korto (naam bodlale kaj korto na), ekhon ID diye.
+            // login er password o bodlay, age shudhu WorkerInfo bodlato
+            int rows = Db.Execute("UPDATE WorkerInfo SET Username = @u, Password = @p, Phone = @ph, Address = @a WHERE [Worker Id] = @id",
+                Db.P("@u", userName), Db.P("@p", password), Db.P("@ph", Phone), Db.P("@a", address), Db.P("@id", Session.UserId));
+            if (rows > 0)
             {
-                using (SqlCommand command = new SqlCommand(query, connection))
-                {
-                    command.Parameters.AddWithValue("@UserName", userName);
-                    command.Parameters.AddWithValue("@Password", password);
-                    command.Parameters.AddWithValue("@Phone", phone);
-                    command.Parameters.AddWithValue("@Address", address);
-
-                    connection.Open();
-                    int rowsAffected = command.ExecuteNonQuery();
-
-                    if (rowsAffected > 0)
-                    {
-                        MessageBox.Show("Record updated successfully!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                        
-                    }
-                    else
-                    {
-                        MessageBox.Show("No record was updated. Please try again.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    }
-                }
+                Db.Execute("UPDATE Login SET Username = @u, Password = @p, Phone = @ph, Address = @a WHERE ID = @id",
+                    Db.P("@u", userName), Db.P("@p", password), Db.P("@ph", Phone), Db.P("@a", address), Db.P("@id", Session.UserId));
+                MessageBox.Show("Record updated successfully!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            else if (rows == 0)
+            {
+                MessageBox.Show("No record was updated. Please try again.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
+        // "Show" chaple abar database theke load kore
         private void button3_Click(object sender, EventArgs e)
         {
-            //show
-
+            LoadUserProfile();
         }
 
-        private void textBox4_TextChanged(object sender, EventArgs e)
-        {
-
-        }
-
-        private void textBox1_TextChanged(object sender, EventArgs e)
-        {
-
-        }
-
-        private void textBox2_TextChanged(object sender, EventArgs e)
-        {
-
-        }
-
-        private void textBox3_TextChanged(object sender, EventArgs e)
-        {
-
-        }
-
-        private void richTextBox1_TextChanged(object sender, EventArgs e)
-        {
-
-        }
+        private void textBox4_TextChanged(object sender, EventArgs e) { }
+        private void textBox1_TextChanged(object sender, EventArgs e) { }
+        private void textBox2_TextChanged(object sender, EventArgs e) { }
+        private void textBox3_TextChanged(object sender, EventArgs e) { }
+        private void richTextBox1_TextChanged(object sender, EventArgs e) { }
     }
 }

@@ -10,7 +10,7 @@ using System.Windows.Forms;
 
 namespace WindowsFormsApp1
 {
-    public partial class BuyerPage : Form
+    public partial class BuyerPage : BaseForm
     {
         public BuyerPage()
         {
@@ -26,6 +26,10 @@ namespace WindowsFormsApp1
 
         private void button4_Click(object sender, EventArgs e)
         {
+            // worker er moto buyer o logout er age jiggesh kore
+            if (MessageBox.Show("Are you sure you want to log out?", "Confirm Log Out", MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes)
+                return;
+            Session.Logout();
             Login lb = new Login();
             lb.Show();
             this.Close();

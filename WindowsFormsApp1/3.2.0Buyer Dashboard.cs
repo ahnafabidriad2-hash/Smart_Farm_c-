@@ -11,11 +11,11 @@ using System.Windows.Forms;
 
 namespace WindowsFormsApp1
 {
-    public partial class BuyerDashboard : Form
+    public partial class BuyerDashboard : BaseForm
     {
         private SqlDataAdapter adapter;
         private DataTable dt;
-        string connectionString = "data source=.\\SQLEXPRESS; database=SmartFarm; integrated security=SSPI";
+        string connectionString = Db.ConnectionString;
         public BuyerDashboard()
         {
             InitializeComponent();
@@ -35,7 +35,10 @@ namespace WindowsFormsApp1
         private void button1_Click(object sender, EventArgs e)
         {
             BuyerRegister buyerRegister = new BuyerRegister();
-            buyerRegister.Show();
+            // age registration khulle pichone dashboard thakto ar register er por arekta notun dashboard khulto (duita hoye jeto).
+            // ekhon registration sesh hole eki dashboard er list refresh hoy
+            buyerRegister.ShowDialog(this);
+            FillDataGridView("SELECT * FROM BuyerInfo");
            
         }
 
@@ -116,7 +119,7 @@ namespace WindowsFormsApp1
 
             using (SqlConnection con = new SqlConnection(connectionString))
             {
-                string deleteQuery = "DELETE FROM BuyerInfo WHERE [Buyer-Id] = @BuyerId";
+                string deleteQuery = "DELETE FROM BuyerInfo WHERE [Buyer-Id] = @BuyerId; DELETE FROM Login WHERE ID = @BuyerId AND Role = 'buyer'"; // age login theke jeto na, tai remove kora manush o login korte parto
                 using (SqlCommand cmd = new SqlCommand(deleteQuery, con))
                 {
                     cmd.Parameters.AddWithValue("@BuyerId", buyerId);

@@ -11,11 +11,13 @@ using System.Windows.Forms;
 
 namespace WindowsFormsApp1
 {
-    public partial class Login : Form
+    public partial class Login : BaseForm
     {
         public Login()
         {
             InitializeComponent();
+            AcceptButton = button1; // enter chaplei login
+            textBox2.UseSystemPasswordChar = true; // password lukano thake
         }
 
         private void pictureBox1_Click(object sender, EventArgs e)
@@ -39,25 +41,26 @@ namespace WindowsFormsApp1
                 return;
             }
 
-            string connectionString = "data source=.\\SQLEXPRESS; database=SmartFarm; integrated security=SSPI";
-
-            string query = "SELECT Role FROM Login WHERE Id = @id AND Password = @password";
-
-            using (SqlConnection connection = new SqlConnection(connectionString))
+            // age ID te okkhor dile database error e app crash korto
+            if (!int.TryParse(id, out int userId))
             {
-                using (SqlCommand command = new SqlCommand(query, connection))
+                MessageBox.Show("Id must be a number.", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            DataTable found = Db.Query("SELECT Role, Username FROM Login WHERE Id = @id AND Password = @password",
+                Db.P("@id", userId), Db.P("@password", password));
+            {
                 {
-                    command.Parameters.AddWithValue("@id", id);
-                    command.Parameters.AddWithValue("@password", password);
-
-                    connection.Open();
-                    object result = command.ExecuteScalar();
-
-                    if (result != null)
+                    if (found.Rows.Count > 0)
                     {
-                        string role = result.ToString().ToLower(); 
+                        string role = found.Rows[0]["Role"].ToString().Trim().ToLower();
 
-                        MessageBox.Show("Login successful!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        // ke login korlo mone rakhi, profile ar order page gula eita dekhe
+                        Session.UserId = userId;
+                        Session.Role = role;
+                        Session.Username = found.Rows[0]["Username"].ToString().Trim();
+
                         this.Hide();
 
                         switch (role)
