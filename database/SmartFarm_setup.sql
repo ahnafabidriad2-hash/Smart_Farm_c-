@@ -1,8 +1,3 @@
--- Smart Farm database toiri kore sample data shoho.
--- notun PC te: SQL Server Management Studio te ei file khule Execute chapun,
--- ba command line e:  sqlcmd -S .\SQLEXPRESS -E -i SmartFarm_setup.sql
--- age theke SmartFarm database thakle eita kichu kore na (data muchbe na).
-
 IF DB_ID('SmartFarm') IS NOT NULL
 BEGIN
     PRINT 'SmartFarm database already exists. Nothing was changed. Use fix_existing_database.sql for an older copy.';
